@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frank's Musik - Music Player</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Montserrat:wght@600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .player-card {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 112, 192, 0.3);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .playlist-btn {
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.15);
+            border: none;
+            color: #dbeafe;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .playlist-btn:hover {
+            background: rgba(96, 165, 250, 0.25);
+            transform: scale(1.1);
+        }
+
+        .playlist-overlay {
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            padding: 16px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .playlist-overlay h3 {
+            color: #93c5fd;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .playlist-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .playlist-item:hover {
+            background: rgba(0, 112, 192, 0.2);
+            transform: translateX(5px);
+        }
+
+        .playlist-item.active {
+            background: rgba(0, 112, 192, 0.4);
+        }
+
+        .playlist-item .number {
+            color: rgba(147, 197, 253, 0.6);
+            font-size: 12px;
+            width: 24px;
+        }
+
+        .playlist-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .playlist-item .title {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .playlist-item .artist {
+            color: #93c5fd;
+            font-size: 12px;
+        }
+
+        .now-playing {
+            display: flex;
+            gap: 4px;
+        }
+
+        .now-playing span {
+            width: 4px;
+            height: 12px;
+            background: #0070c0;
+            animation: pulse 0.8s ease infinite;
+        }
+
+        .now-playing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .now-playing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .album-cover-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .album-cover {
+            width: 256px;
+            height: 256px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(96, 165, 250, 0.3);
+            box-shadow: 0 0 50px rgba(0, 112, 192, 0.5);
+        }
+
+        .vinyl-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            pointer-events: none;
+        }
+
+        .song-info {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .song-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .song-artist {
+            color: #93c5fd;
+            font-size: 18px;
+        }
+
+        .progress-container {
+            margin-bottom: 24px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .progress-bar::-webkit-slider-track {
+            background: rgba(96, 165, 250, 0.2);
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .progress-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 18px;
+            width: 18px;
+            background: #0070c0;
+            border-radius: 50%;
+            border: 2px solid #dbeafe;
+            margin-top: -6px;
+            transition: all 0.2s;
+        }
+
+        .progress-bar::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(0, 112, 192, 0.8);
+        }
+
+        .progress-bar::-moz-range-track {
+            background: rgba(96, 165, 250, 0.2);
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .progress-bar::-moz-range-thumb {
+            height: 18px;
+            width: 18px;
+            background: #0070c0;
+            border-radius: 50%;
+            border: 2px solid #dbeafe;
+            transition: all 0.2s;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            color: #93c5fd;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .control-btn {
+            padding: 12px;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.15);
+            border: none;
+            color: #dbeafe;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: rgba(96, 165, 250, 0.25);
+            transform: scale(1.1);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .play-btn {
+            padding: 24px;
+            background: #0070c0;
+            box-shadow: 0 0 20px rgba(0, 112, 192, 0.6);
+        }
+
+        .play-btn:hover {
+            background: #005a9e;
+        }
+
+        .secondary-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .secondary-btn {
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.15);
+            border: none;
+            color: #dbeafe;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(96, 165, 250, 0.25);
+            transform: scale(1.1);
+        }
+
+        .secondary-btn.active {
+            background: #0070c0;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .volume-btn {
+            background: transparent;
+            border: none;
+            color: #dbeafe;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .volume-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .volume-bar {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .volume-bar::-webkit-slider-track {
+            background: rgba(96, 165, 250, 0.2);
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .volume-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 18px;
+            width: 18px;
+            background: #0070c0;
+            border-radius: 50%;
+            border: 2px solid #dbeafe;
+            margin-top: -6px;
+        }
+
+        .track-info {
+            text-align: center;
+            color: #93c5fd;
+            font-size: 14px;
+            margin-top: 24px;
+        }
+
+        .status-indicator {
+            text-align: center;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 12px;
+            color: rgba(147, 197, 253, 0.7);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #60a5fa;
+        }
+
+        .status-dot.loading {
+            background: #60a5fa;
+            animation: pulse 1s ease infinite;
+        }
+
+        .status-dot.playing {
+            background: #0ea5e9;
+            animation: pulse 1s ease infinite;
+        }
+
+        .status-dot.paused {
+            background: #60a5fa;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .control-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .play-btn svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .secondary-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .volume-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Scrollbar Styling */
+        .playlist-overlay::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .playlist-overlay::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .playlist-overlay::-webkit-scrollbar-thumb {
+            background: rgba(0, 112, 192, 0.5);
+            border-radius: 4px;
+        }
+
+        .playlist-overlay::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 112, 192, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="player-card">
+        <div class="header">
+            <h1>FRANK'S MUSIK</h1>
+            <button class="playlist-btn" id="playlistBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="playlist-overlay hidden" id="playlistOverlay">
+            <h3>Playlist (<span id="playlistCount">15</span> Songs)</h3>
+            <div id="playlistItems"></div>
+        </div>
+
+        <div class="album-cover-container">
+            <img id="albumCover" class="album-cover" src="" alt="Album Cover">
+            <div class="vinyl-center"></div>
+        </div>
+
+        <div class="song-info">
+            <h2 class="song-title" id="songTitle">Loading...</h2>
+            <p class="song-artist" id="songArtist">7272_southYangsan</p>
+        </div>
+
+        <div class="progress-container">
+            <input type="range" class="progress-bar" id="progressBar" min="0" max="100" value="0">
+            <div class="time-display">
+                <span id="currentTime">0:00</span>
+                <span id="duration">0:00</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" id="prevBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                </svg>
+            </button>
+
+            <button class="control-btn play-btn" id="playBtn">
+                <svg id="playIcon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg id="pauseIcon" fill="currentColor" viewBox="0 0 24 24" class="hidden">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                </svg>
+            </button>
+
+            <button class="control-btn" id="nextBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="secondary-controls">
+            <button class="secondary-btn" id="shuffleBtn" title="Zufallswiedergabe">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                </svg>
+            </button>
+
+            <button class="secondary-btn" id="repeatBtn" title="Wiederholen">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="volume-control">
+            <button class="volume-btn" id="volumeBtn">
+                <svg id="volumeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <svg id="volumeMuteIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="hidden">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+            <input type="range" class="volume-bar" id="volumeBar" min="0" max="100" value="70">
+        </div>
+
+        <div class="track-info">
+            Track <span id="currentTrack">1</span> von <span id="totalTracks">15</span>
+        </div>
+
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Bereit</span>
+        </div>
+    </div>
+
+    <audio id="audio"></audio>
+
+    <script>
+        const playlist = [
+            {
+                id: 1,
+                title: "A Peaceful Mind",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/a_peaceful_mind.mp3",
+                cover: "https://7272south.github.io/frank-music/a_peaceful_mind.jpeg"
+            },
+            {
+                id: 2,
+                title: "Der Geist ist ein Spiegel",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/der_geist_ist_ein_spiegel.mp3",
+                cover: "https://7272south.github.io/frank-music/der_geist_ist_ein_spiegel.jpeg"
+            },
+            {
+                id: 3,
+                title: "Ich atme ein - ich atme aus",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/ich_atme_ein-ich_atme_aus.mp3",
+                cover: "https://7272south.github.io/frank-music/ich_atme_ein-ich_atme_aus.jpeg"
+            },
+            {
+                id: 4,
+                title: "Himmel hinter Lärm",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/himmel_hinter_laerm.mp3",
+                cover: "https://7272south.github.io/frank-music/himmel_hinter_laerm.jpeg"
+            },
+            {
+                id: 5,
+                title: "Freundschaft mehr als ich",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/freundschaft_mehr_als_ich.mp3",
+                cover: "https://7272south.github.io/frank-music/freundschaft_mehr_als_ich.jpeg"
+            },
+            {
+                id: 6,
+                title: "Alles fließt",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/alles_fliesst.mp3",
+                cover: "https://7272south.github.io/frank-music/alles_fliesst.jpeg"
+            },
+            {
+                id: 7,
+                title: "Beton Konfetti",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/beton_konfetti.mp3",
+                cover: "https://7272south.github.io/frank-music/beton_konfetti.jpeg"
+            },
+            {
+                id: 8,
+                title: "Mach mal Pause Digga",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/mach_mal_pause_digga.mp3",
+                cover: "https://7272south.github.io/frank-music/mach_mal_pause_digga.jpeg"
+            },
+            {
+                id: 9,
+                title: "Du erntest was du säst",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/du_erntest_was_du_saest.mp3",
+                cover: "https://7272south.github.io/frank-music/du_erntest_was_du_saest.jpeg"
+            },
+            {
+                id: 10,
+                title: "Ich falle hin",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/ich_falle_hin.mp3",
+                cover: "https://7272south.github.io/frank-music/ich_falle_hin.jpeg"
+            },
+            {
+                id: 11,
+                title: "Philosophie",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/philosophie.mp3",
+                cover: "https://7272south.github.io/frank-music/philosophie.jpeg"
+            },
+            {
+                id: 12,
+                title: "Pflege deinen Geist",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/pflege_deinen_geist.mp3",
+                cover: "https://7272south.github.io/frank-music/pflege_deinen_geist.jpeg"
+            },
+            {
+                id: 13,
+                title: "Der Horizont und das Staubkorn",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/der_horizont_und_das_staubkorn.mp3",
+                cover: "https://7272south.github.io/frank-music/der_horizont_und_das_staubkorn.jpeg"
+            },
+            {
+                id: 14,
+                title: "Wind und Wellen",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/wind_und_wellen.mp3",
+                cover: "https://7272south.github.io/frank-music/wind_und_wellen.jpeg"
+            },
+            {
+                id: 15,
+                title: "Glanzvolles Verschwinden",
+                artist: "7272_southYangsan",
+                src: "https://7272south.github.io/frank-music/glanzvolles_verschwinden.mp3",
+                cover: "https://7272south.github.io/frank-music/glanzvolles_verschwinden.jpeg"
+            }
+        ];
+
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+        let isMuted = false;
+
+        const audio = document.getElementById('audio');
+        const playBtn = document.getElementById('playBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const progressBar = document.getElementById('progressBar');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const songTitle = document.getElementById('songTitle');
+        const songArtist = document.getElementById('songArtist');
+        const albumCover = document.getElementById('albumCover');
+        const currentTrack = document.getElementById('currentTrack');
+        const totalTracks = document.getElementById('totalTracks');
+        const volumeBar = document.getElementById('volumeBar');
+        const volumeBtn = document.getElementById('volumeBtn');
+        const volumeIcon = document.getElementById('volumeIcon');
+        const volumeMuteIcon = document.getElementById('volumeMuteIcon');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+        const playlistBtn = document.getElementById('playlistBtn');
+        const playlistOverlay = document.getElementById('playlistOverlay');
+        const playlistItems = document.getElementById('playlistItems');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        function loadSong(index) {
+            const song = playlist[index];
+            audio.src = song.src;
+            albumCover.src = song.cover;
+            songTitle.textContent = song.title;
+            songArtist.textContent = song.artist;
+            currentTrack.textContent = index + 1;
+            updatePlaylistUI();
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+            } else {
+                audio.play();
+            }
+        }
+
+        function playNext() {
+            if (isShuffle) {
+                let newIndex;
+                do {
+                    newIndex = Math.floor(Math.random() * playlist.length);
+                } while (newIndex === currentSongIndex && playlist.length > 1);
+                currentSongIndex = newIndex;
+            } else {
+                currentSongIndex = (currentSongIndex + 1) % playlist.length;
+            }
+            loadSong(currentSongIndex);
+            if (isPlaying) {
+                audio.play();
+            }
+        }
+
+        function playPrevious() {
+            if (audio.currentTime > 3) {
+                audio.currentTime = 0;
+            } else {
+                currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+                loadSong(currentSongIndex);
+                if (isPlaying) {
+                    audio.play();
+                }
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updatePlaylistUI() {
+            playlistItems.innerHTML = '';
+            playlist.forEach((song, index) => {
+                const item = document.createElement('div');
+                item.className = 'playlist-item' + (index === currentSongIndex ? ' active' : '');
+                item.innerHTML = `
+                    <div class="number">${index + 1}</div>
+                    <div class="info">
+                        <div class="title">${song.title}</div>
+                        <div class="artist">${song.artist}</div>
+                    </div>
+                    ${index === currentSongIndex && isPlaying ? '<div class="now-playing"><span></span><span></span><span></span></div>' : ''}
+                `;
+                item.addEventListener('click', () => {
+                    currentSongIndex = index;
+                    loadSong(index);
+                    audio.play();
+                    playlistOverlay.classList.add('hidden');
+                });
+                playlistItems.appendChild(item);
+            });
+        }
+
+        // Event Listeners
+        playBtn.addEventListener('click', togglePlay);
+        nextBtn.addEventListener('click', playNext);
+        prevBtn.addEventListener('click', playPrevious);
+
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+            statusDot.className = 'status-dot playing';
+            statusText.textContent = 'Läuft...';
+            updatePlaylistUI();
+        });
+
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            statusDot.className = 'status-dot paused';
+            statusText.textContent = 'Pausiert';
+            updatePlaylistUI();
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            const progress = (audio.currentTime / audio.duration) * 100 || 0;
+            progressBar.value = progress;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(audio.duration);
+            statusDot.className = 'status-dot';
+            statusText.textContent = 'Bereit';
+        });
+
+        audio.addEventListener('ended', () => {
+            if (isRepeat) {
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                playNext();
+            }
+        });
+
+        audio.addEventListener('waiting', () => {
+            statusDot.className = 'status-dot loading';
+            statusText.textContent = 'Lädt...';
+        });
+
+        audio.addEventListener('canplay', () => {
+            statusDot.className = 'status-dot';
+            statusText.textContent = 'Bereit';
+        });
+
+        progressBar.addEventListener('input', (e) => {
+            const seekTime = (e.target.value / 100) * audio.duration;
+            audio.currentTime = seekTime;
+        });
+
+        volumeBar.addEventListener('input', (e) => {
+            audio.volume = e.target.value / 100;
+            if (audio.volume === 0) {
+                volumeIcon.classList.add('hidden');
+                volumeMuteIcon.classList.remove('hidden');
+            } else {
+                volumeIcon.classList.remove('hidden');
+                volumeMuteIcon.classList.add('hidden');
+            }
+        });
+
+        volumeBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            if (isMuted) {
+                audio.volume = 0;
+                volumeBar.value = 0;
+                volumeIcon.classList.add('hidden');
+                volumeMuteIcon.classList.remove('hidden');
+            } else {
+                audio.volume = 0.7;
+                volumeBar.value = 70;
+                volumeIcon.classList.remove('hidden');
+                volumeMuteIcon.classList.add('hidden');
+            }
+        });
+
+        shuffleBtn.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            shuffleBtn.classList.toggle('active');
+        });
+
+        repeatBtn.addEventListener('click', () => {
+            isRepeat = !isRepeat;
+            repeatBtn.classList.toggle('active');
+        });
+
+        playlistBtn.addEventListener('click', () => {
+            playlistOverlay.classList.toggle('hidden');
+        });
+
+        // Initialize
+        audio.volume = 0.7;
+        totalTracks.textContent = playlist.length;
+        loadSong(0);
+        updatePlaylistUI();
+    </script>
+</body>
+</html>
