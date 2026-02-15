@@ -214,7 +214,7 @@
         }
 
         .progress-bar::-webkit-slider-track {
-            background: rgba(96, 165, 250, 0.2);
+            background: rgba(30, 41, 59, 0.8);
             height: 6px;
             border-radius: 3px;
         }
@@ -237,7 +237,7 @@
         }
 
         .progress-bar::-moz-range-track {
-            background: rgba(96, 165, 250, 0.2);
+            background: rgba(30, 41, 59, 0.8);
             height: 6px;
             border-radius: 3px;
         }
@@ -455,6 +455,13 @@
 
         .playlist-overlay::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 112, 192, 0.7);
+        }
+
+        /* Mobile: Verstecke Lautstärkeregler */
+        @media (max-width: 768px) {
+            .volume-control {
+                display: none !important;
+            }
         }
     </style>
 </head>
