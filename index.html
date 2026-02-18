@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frank's Musik - Music Player</title>
+    <title>Frank's KI Musik</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Montserrat:wght@600;700&display=swap');
         
@@ -38,11 +38,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
         .header h1 {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: white;
             letter-spacing: -0.5px;
@@ -63,32 +63,67 @@
             transform: scale(1.1);
         }
 
+        /* Album Filter */
+        .album-filter {
+            margin-bottom: 24px;
+        }
+
+        .album-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        .album-btn {
+            padding: 6px 12px;
+            border-radius: 16px;
+            background: rgba(96, 165, 250, 0.15);
+            border: none;
+            color: #93c5fd;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .album-btn:hover {
+            background: rgba(96, 165, 250, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .album-btn.active {
+            background: #0070c0;
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 112, 192, 0.5);
+        }
+
         .playlist-overlay {
             margin-bottom: 24px;
             background: rgba(0, 0, 0, 0.4);
             border-radius: 16px;
-            padding: 16px;
-            max-height: 320px;
+            padding: 12px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
         .playlist-overlay h3 {
             color: #93c5fd;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .playlist-item {
-            padding: 12px;
-            border-radius: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
             cursor: pointer;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .playlist-item:hover {
@@ -102,8 +137,8 @@
 
         .playlist-item .number {
             color: rgba(147, 197, 253, 0.6);
-            font-size: 12px;
-            width: 24px;
+            font-size: 11px;
+            width: 20px;
         }
 
         .playlist-item .info {
@@ -114,7 +149,7 @@
         .playlist-item .title {
             color: white;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -122,17 +157,23 @@
 
         .playlist-item .artist {
             color: #93c5fd;
-            font-size: 12px;
+            font-size: 10px;
+        }
+
+        .playlist-item .album-tag {
+            color: rgba(147, 197, 253, 0.6);
+            font-size: 9px;
+            margin-top: 1px;
         }
 
         .now-playing {
             display: flex;
-            gap: 4px;
+            gap: 3px;
         }
 
         .now-playing span {
-            width: 4px;
-            height: 12px;
+            width: 3px;
+            height: 10px;
             background: #0070c0;
             animation: pulse 0.8s ease infinite;
         }
@@ -200,6 +241,14 @@
             font-size: 18px;
         }
 
+        .song-album {
+            color: rgba(147, 197, 253, 0.6);
+            font-size: 12px;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         .progress-container {
             margin-bottom: 24px;
         }
@@ -208,14 +257,28 @@
             width: 100%;
             height: 6px;
             -webkit-appearance: none;
+            -moz-appearance: none;
             appearance: none;
             background: transparent;
             cursor: pointer;
+            outline: none;
+        }
+
+        /* Safari iOS & Chrome */
+        .progress-bar::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background-color: #000000;
+            border: none;
+            border-radius: 3px;
+            box-shadow: none;
         }
 
         .progress-bar::-webkit-slider-track {
-            background: rgba(30, 41, 59, 0.8);
+            width: 100%;
             height: 6px;
+            background-color: #000000;
+            border: none;
             border-radius: 3px;
         }
 
@@ -228,6 +291,7 @@
             border-radius: 50%;
             border: 2px solid #dbeafe;
             margin-top: -6px;
+            cursor: pointer;
             transition: all 0.2s;
         }
 
@@ -236,9 +300,12 @@
             box-shadow: 0 0 15px rgba(0, 112, 192, 0.8);
         }
 
+        /* Firefox */
         .progress-bar::-moz-range-track {
-            background: rgba(30, 41, 59, 0.8);
+            width: 100%;
             height: 6px;
+            background: #000000;
+            border: none;
             border-radius: 3px;
         }
 
@@ -248,6 +315,7 @@
             background: #0070c0;
             border-radius: 50%;
             border: 2px solid #dbeafe;
+            cursor: pointer;
             transition: all 0.2s;
         }
 
@@ -353,10 +421,26 @@
             cursor: pointer;
         }
 
+        .volume-bar::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 1px;
+        }
+
         .volume-bar::-webkit-slider-track {
-            background: rgba(96, 165, 250, 0.2);
-            height: 6px;
-            border-radius: 3px;
+            width: 100%;
+            height: 2px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 1px;
+        }
+
+        .volume-bar::-moz-range-track {
+            background: rgba(255, 255, 255, 0.5);
+            height: 2px;
+            border-radius: 1px;
         }
 
         .volume-bar::-webkit-slider-thumb {
@@ -367,7 +451,16 @@
             background: #0070c0;
             border-radius: 50%;
             border: 2px solid #dbeafe;
-            margin-top: -6px;
+            margin-top: -8px;
+        }
+
+        .volume-bar::-moz-range-thumb {
+            height: 18px;
+            width: 18px;
+            background: #0070c0;
+            border-radius: 50%;
+            border: 2px solid #dbeafe;
+            cursor: pointer;
         }
 
         .track-info {
@@ -440,17 +533,17 @@
 
         /* Scrollbar Styling */
         .playlist-overlay::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .playlist-overlay::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         .playlist-overlay::-webkit-scrollbar-thumb {
             background: rgba(0, 112, 192, 0.5);
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         .playlist-overlay::-webkit-scrollbar-thumb:hover {
@@ -468,7 +561,7 @@
 <body>
     <div class="player-card">
         <div class="header">
-            <h1>FRANK'S MUSIK</h1>
+            <h1>Frank's KI Musik</h1>
             <button class="playlist-btn" id="playlistBtn">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -476,8 +569,15 @@
             </button>
         </div>
 
+        <!-- Album Filter -->
+        <div class="album-filter">
+            <div class="album-buttons" id="albumButtons">
+                <!-- Wird dynamisch gefüllt -->
+            </div>
+        </div>
+
         <div class="playlist-overlay hidden" id="playlistOverlay">
-            <h3>Playlist (<span id="playlistCount">15</span> Songs)</h3>
+            <h3>Playlist (<span id="playlistCount">0</span> Songs)</h3>
             <div id="playlistItems"></div>
         </div>
 
@@ -489,6 +589,7 @@
         <div class="song-info">
             <h2 class="song-title" id="songTitle">Loading...</h2>
             <p class="song-artist" id="songArtist">7272_southYangsan</p>
+            <p class="song-album" id="songAlbum"></p>
         </div>
 
         <div class="progress-container">
@@ -561,114 +662,12 @@
     <audio id="audio"></audio>
 
     <script>
-        const playlist = [
-            {
-                id: 1,
-                title: "A Peaceful Mind",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/a_peaceful_mind.mp3",
-                cover: "https://7272south.github.io/frank-music/a_peaceful_mind.jpeg"
-            },
-            {
-                id: 2,
-                title: "Der Geist ist ein Spiegel",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/der_geist_ist_ein_spiegel.mp3",
-                cover: "https://7272south.github.io/frank-music/der_geist_ist_ein_spiegel.jpeg"
-            },
-            {
-                id: 3,
-                title: "Ich atme ein - ich atme aus",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/ich_atme_ein-ich_atme_aus.mp3",
-                cover: "https://7272south.github.io/frank-music/ich_atme_ein-ich_atme_aus.jpeg"
-            },
-            {
-                id: 4,
-                title: "Himmel hinter Lärm",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/himmel_hinter_laerm.mp3",
-                cover: "https://7272south.github.io/frank-music/himmel_hinter_laerm.jpeg"
-            },
-            {
-                id: 5,
-                title: "Freundschaft mehr als ich",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/freundschaft_mehr_als_ich.mp3",
-                cover: "https://7272south.github.io/frank-music/freundschaft_mehr_als_ich.jpeg"
-            },
-            {
-                id: 6,
-                title: "Alles fließt",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/alles_fliesst.mp3",
-                cover: "https://7272south.github.io/frank-music/alles_fliesst.jpeg"
-            },
-            {
-                id: 7,
-                title: "Beton Konfetti",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/beton_konfetti.mp3",
-                cover: "https://7272south.github.io/frank-music/beton_konfetti.jpeg"
-            },
-            {
-                id: 8,
-                title: "Mach mal Pause Digga",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/mach_mal_pause_digga.mp3",
-                cover: "https://7272south.github.io/frank-music/mach_mal_pause_digga.jpeg"
-            },
-            {
-                id: 9,
-                title: "Du erntest was du säst",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/du_erntest_was_du_saest.mp3",
-                cover: "https://7272south.github.io/frank-music/du_erntest_was_du_saest.jpeg"
-            },
-            {
-                id: 10,
-                title: "Ich falle hin",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/ich_falle_hin.mp3",
-                cover: "https://7272south.github.io/frank-music/ich_falle_hin.jpeg"
-            },
-            {
-                id: 11,
-                title: "Philosophie",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/philosophie.mp3",
-                cover: "https://7272south.github.io/frank-music/philosophie.jpeg"
-            },
-            {
-                id: 12,
-                title: "Pflege deinen Geist",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/pflege_deinen_geist.mp3",
-                cover: "https://7272south.github.io/frank-music/pflege_deinen_geist.jpeg"
-            },
-            {
-                id: 13,
-                title: "Der Horizont und das Staubkorn",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/der_horizont_und_das_staubkorn.mp3",
-                cover: "https://7272south.github.io/frank-music/der_horizont_und_das_staubkorn.jpeg"
-            },
-            {
-                id: 14,
-                title: "Wind und Wellen",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/wind_und_wellen.mp3",
-                cover: "https://7272south.github.io/frank-music/wind_und_wellen.jpeg"
-            },
-            {
-                id: 15,
-                title: "Glanzvolles Verschwinden",
-                artist: "7272_southYangsan",
-                src: "https://7272south.github.io/frank-music/glanzvolles_verschwinden.mp3",
-                cover: "https://7272south.github.io/frank-music/glanzvolles_verschwinden.jpeg"
-            }
-        ];
+        // Vollständige Playlist mit Alben
+        // Songs werden automatisch aus songs.json geladen
+        let allSongs = [];
 
+        let currentAlbum = 'Alle';
+        let filteredPlaylist = [];
         let currentSongIndex = 0;
         let isPlaying = false;
         let isShuffle = false;
@@ -686,6 +685,7 @@
         const durationEl = document.getElementById('duration');
         const songTitle = document.getElementById('songTitle');
         const songArtist = document.getElementById('songArtist');
+        const songAlbum = document.getElementById('songAlbum');
         const albumCover = document.getElementById('albumCover');
         const currentTrack = document.getElementById('currentTrack');
         const totalTracks = document.getElementById('totalTracks');
@@ -698,15 +698,61 @@
         const playlistBtn = document.getElementById('playlistBtn');
         const playlistOverlay = document.getElementById('playlistOverlay');
         const playlistItems = document.getElementById('playlistItems');
+        const playlistCount = document.getElementById('playlistCount');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
+        const albumButtons = document.getElementById('albumButtons');
+
+        // Alben extrahieren und Buttons erstellen
+        function initAlbumButtons() {
+            const albums = ['Alle', ...new Set(allSongs.map(song => song.album))];
+            
+            albumButtons.innerHTML = '';
+            albums.forEach(album => {
+                const btn = document.createElement('button');
+                btn.className = 'album-btn' + (album === 'Alle' ? ' active' : '');
+                btn.textContent = album;
+                btn.addEventListener('click', () => filterByAlbum(album));
+                albumButtons.appendChild(btn);
+            });
+        }
+
+        // Nach Album filtern
+        function filterByAlbum(album) {
+            currentAlbum = album;
+            
+            // Buttons aktualisieren
+            document.querySelectorAll('.album-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === album);
+            });
+            
+            // Playlist filtern
+            if (album === 'Alle') {
+                filteredPlaylist = [...allSongs];
+            } else {
+                filteredPlaylist = allSongs.filter(song => song.album === album);
+            }
+            
+            // WICHTIG: Ersten Song des Albums laden und Cover sofort ändern
+            currentSongIndex = 0;
+            if (filteredPlaylist.length > 0) {
+                loadSong(0);
+            }
+            
+            updatePlaylistUI();
+            playlistCount.textContent = filteredPlaylist.length;
+            totalTracks.textContent = filteredPlaylist.length;
+        }
 
         function loadSong(index) {
-            const song = playlist[index];
+            if (index < 0 || index >= filteredPlaylist.length) return;
+            
+            const song = filteredPlaylist[index];
             audio.src = song.src;
             albumCover.src = song.cover;
             songTitle.textContent = song.title;
             songArtist.textContent = song.artist;
+            songAlbum.textContent = song.album;
             currentTrack.textContent = index + 1;
             updatePlaylistUI();
         }
@@ -723,13 +769,14 @@
             if (isShuffle) {
                 let newIndex;
                 do {
-                    newIndex = Math.floor(Math.random() * playlist.length);
-                } while (newIndex === currentSongIndex && playlist.length > 1);
+                    newIndex = Math.floor(Math.random() * filteredPlaylist.length);
+                } while (newIndex === currentSongIndex && filteredPlaylist.length > 1);
                 currentSongIndex = newIndex;
             } else {
-                currentSongIndex = (currentSongIndex + 1) % playlist.length;
+                currentSongIndex = (currentSongIndex + 1) % filteredPlaylist.length;
             }
             loadSong(currentSongIndex);
+            // BUG-FIX: Automatisch weiterspielen wenn shuffle aktiv ist
             if (isPlaying) {
                 audio.play();
             }
@@ -739,7 +786,7 @@
             if (audio.currentTime > 3) {
                 audio.currentTime = 0;
             } else {
-                currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+                currentSongIndex = (currentSongIndex - 1 + filteredPlaylist.length) % filteredPlaylist.length;
                 loadSong(currentSongIndex);
                 if (isPlaying) {
                     audio.play();
@@ -756,7 +803,7 @@
 
         function updatePlaylistUI() {
             playlistItems.innerHTML = '';
-            playlist.forEach((song, index) => {
+            filteredPlaylist.forEach((song, index) => {
                 const item = document.createElement('div');
                 item.className = 'playlist-item' + (index === currentSongIndex ? ' active' : '');
                 item.innerHTML = `
@@ -764,6 +811,7 @@
                     <div class="info">
                         <div class="title">${song.title}</div>
                         <div class="artist">${song.artist}</div>
+                        <div class="album-tag">${song.album}</div>
                     </div>
                     ${index === currentSongIndex && isPlaying ? '<div class="now-playing"><span></span><span></span><span></span></div>' : ''}
                 `;
@@ -818,6 +866,8 @@
                 audio.play();
             } else {
                 playNext();
+                // Pause von 2 Sekunden zwischen Songs
+                setTimeout(() => audio.play(), 2000);
             }
         });
 
@@ -876,11 +926,37 @@
             playlistOverlay.classList.toggle('hidden');
         });
 
-        // Initialize
-        audio.volume = 0.7;
-        totalTracks.textContent = playlist.length;
-        loadSong(0);
-        updatePlaylistUI();
+        // Songs aus songs.json laden
+        async function loadSongsFromJSON() {
+            try {
+                const response = await fetch('https://7272south.github.io/frank-music/songs.json');
+                const songsData = await response.json();
+                
+                // Songs in allSongs Array laden
+                allSongs = songsData.map((song, index) => ({
+                    id: index + 1,
+                    title: song.title,
+                    artist: song.artist,
+                    album: song.album,
+                    src: `https://7272south.github.io/frank-music/${song.folder}/${song.filename}.mp3`,
+                    cover: `https://7272south.github.io/frank-music/${song.folder}/${song.filename}.jpeg`
+                }));
+                
+                // Player initialisieren
+                audio.volume = 0.7;
+                initAlbumButtons();
+                filterByAlbum('Alle');
+                loadSong(0);
+                
+                console.log(`✅ ${allSongs.length} Songs erfolgreich geladen!`);
+            } catch (error) {
+                console.error('❌ Fehler beim Laden der Songs:', error);
+                statusText.textContent = 'Fehler beim Laden';
+            }
+        }
+
+        // Beim Start songs.json laden
+        loadSongsFromJSON();
     </script>
 </body>
 </html>
