@@ -733,10 +733,25 @@
                 filteredPlaylist = allSongs.filter(song => song.album === album);
             }
             
-            // WICHTIG: Ersten Song des Albums laden und Cover sofort ändern
-            currentSongIndex = 0;
-            if (filteredPlaylist.length > 0) {
-                loadSong(0);
+            // WICHTIG: Prüfe ob aktueller Song noch im Filter ist
+            const currentSong = filteredPlaylist[currentSongIndex];
+            const currentlyPlayingSongId = allSongs.findIndex(s => 
+                s.src === audio.src
+            );
+            
+            // Finde den aktuell spielenden Song in der gefilterten Liste
+            const songStillInFilter = filteredPlaylist.findIndex(s => 
+                s.src === audio.src
+            );
+            
+            if (songStillInFilter !== -1) {
+                // Song ist noch im Filter - setze Index korrekt
+                currentSongIndex = songStillInFilter;
+            } else {
+                // Song ist nicht mehr im Filter - setze auf 0 aber lade NICHT
+                currentSongIndex = 0;
+                // WICHTIG: Lade den Song NICHT automatisch!
+                // Lasse den aktuellen Song weiterlaufen
             }
             
             updatePlaylistUI();
