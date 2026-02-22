@@ -830,7 +830,24 @@
 
         // Alben extrahieren und Buttons erstellen
         function initAlbumButtons() {
-            const albums = ['Alle', ...new Set(allSongs.map(song => song.album))];
+            // ⚙️ HIER KANNST DU DIE REIHENFOLGE ÄNDERN:
+            // Einfach die Alben in die gewünschte Reihenfolge bringen!
+            const albumOrder = [
+                'Alle',
+                'Philosophie',
+                'Poesie',
+                '한국',
+                'Leben',
+                'Instrumental'
+            ];
+            
+            // Prüfe welche Alben tatsächlich Songs haben
+            const availableAlbums = new Set(allSongs.map(song => song.album));
+            
+            // Filtere nur Alben die existieren (außer "Alle")
+            const albums = albumOrder.filter(album => 
+                album === 'Alle' || availableAlbums.has(album)
+            );
             
             albumButtons.innerHTML = '';
             albums.forEach(album => {
