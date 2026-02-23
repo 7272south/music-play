@@ -304,6 +304,35 @@
             border-radius: 3px;
         }
 
+        /* Karaoke Mode */
+        .karaoke-line {
+            padding: 8px 0;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            cursor: default;
+        }
+
+        .karaoke-line.past {
+            color: #6b7280;
+            opacity: 0.5;
+        }
+
+        .karaoke-line.current {
+            color: #60a5fa;
+            font-weight: 700;
+            font-size: 17px;
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+            transform: scale(1.05);
+        }
+
+        .karaoke-line.future {
+            color: #dbeafe;
+        }
+
+        .lyrics-content.karaoke-mode {
+            scroll-behavior: smooth;
+        }
+
         .lyrics-content::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 112, 192, 0.7);
         }
@@ -828,6 +857,12 @@
         const lyricsContent = document.getElementById('lyricsContent');
         const closeLyricsBtn = document.getElementById('closeLyricsBtn');
 
+        // Karaoke Variables
+        let lrcData = null;
+        let lrcLines = [];
+        let currentLrcIndex = -1;
+        let isKaraokeMode = false;
+
         // Alben extrahieren und Buttons erstellen
         function initAlbumButtons() {
             // ⚙️ HIER KANNST DU DIE REIHENFOLGE ÄNDERN:
@@ -835,10 +870,10 @@
             const albumOrder = [
                 'Alle',
                 'Philosophie',
-                'Poesie',
-                '한국',
                 'Leben',
-                'Instrumental'
+                'Sterben',
+                'Poesie',
+                '한국'
             ];
             
             // Prüfe welche Alben tatsächlich Songs haben
@@ -901,6 +936,132 @@
             totalTracks.textContent = filteredPlaylist.length;
         }
 
+        
+        // ==================== KARAOKE FUNCTIONS ====================
+        
+        // LRC Parser
+        function parseLRC(lrcText) {
+            const lines = lrcText.split('\n');
+            const parsed = [];
+            
+            for (const line of lines) {
+                const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2})\](.*)$/);
+                if (match) {
+                    const minutes = parseInt(match[1]);
+                    const seconds = parseInt(match[2]);
+                    const centiseconds = parseInt(match[3]);
+                    const text = match[4].trim();
+                    
+                    const timeInSeconds = minutes * 60 + seconds + centiseconds / 100;
+                    
+                    if (text) { // Nur Zeilen mit Text
+                        parsed.push({
+                            time: timeInSeconds,
+                            text: text
+                        });
+                    }
+                }
+            }
+            
+            return parsed.sort((a, b) => a.time - b.time);
+        }
+        
+        // Lade LRC-Datei
+        async function loadLRC(folder, filename) {
+            try {
+                const lrcPath = `https://7272south.github.io/frank-music/${folder}/${filename}.lrc`;
+                const response = await fetch(lrcPath);
+                
+                if (!response.ok) {
+                    return null;
+                }
+                
+                const lrcText = await response.text();
+                return parseLRC(lrcText);
+            } catch (error) {
+                console.log('Fehler beim Laden der LRC:', error);
+                return null;
+            }
+        }
+        
+        // Karaoke-Mode aktivieren
+        function showKaraoke() {
+            if (!lrcData || lrcData.length === 0) {
+                console.log('Keine LRC-Daten verfügbar');
+                return;
+            }
+            
+            isKaraokeMode = true;
+            showingLyrics = true;
+            
+            // Verstecke Album-Cover
+            document.querySelector('.album-cover-container').style.display = 'none';
+            
+            // Zeige Lyrics-Container
+            const lyricsContainer = document.querySelector('.lyrics-container');
+            lyricsContainer.style.display = 'flex';
+            
+            // Setze Header auf "Karaoke"
+            lyricsContainer.querySelector('h3').textContent = '🎤 Karaoke';
+            
+            // Zeige Karaoke-Lyrics
+            const lyricsContent = document.querySelector('.lyrics-content');
+            lyricsContent.classList.add('karaoke-mode');
+            lyricsContent.innerHTML = '';
+            
+            lrcData.forEach((line, index) => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'karaoke-line future';
+                lineDiv.textContent = line.text || '♪';
+                lineDiv.dataset.index = index;
+                lineDiv.dataset.time = line.time;
+                lyricsContent.appendChild(lineDiv);
+            });
+            
+            currentLrcIndex = -1;
+        }
+        
+        // Update Karaoke basierend auf aktueller Zeit
+        function updateKaraoke(currentTime) {
+            if (!isKaraokeMode || !lrcData || lrcData.length === 0) return;
+            
+            // Finde die aktuelle Zeile
+            let newIndex = -1;
+            for (let i = 0; i < lrcData.length; i++) {
+                if (currentTime >= lrcData[i].time) {
+                    newIndex = i;
+                } else {
+                    break;
+                }
+            }
+            
+            // Wenn sich die Zeile geändert hat
+            if (newIndex !== currentLrcIndex) {
+                currentLrcIndex = newIndex;
+                
+                const lines = document.querySelectorAll('.karaoke-line');
+                lines.forEach((line, index) => {
+                    const lineIndex = parseInt(line.dataset.index);
+                    
+                    if (lineIndex < currentLrcIndex) {
+                        line.className = 'karaoke-line past';
+                    } else if (lineIndex === currentLrcIndex) {
+                        line.className = 'karaoke-line current';
+                        
+                        // Auto-Scroll zur aktuellen Zeile
+                        line.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    } else {
+                        line.className = 'karaoke-line future';
+                    }
+                });
+            }
+        }
+        
+        // ==================== END KARAOKE FUNCTIONS ====================
+
         function loadSong(index) {
             if (index < 0 || index >= filteredPlaylist.length) return;
             
@@ -915,11 +1076,28 @@
             // Lyrics laden (falls vorhanden)
             if (song.lyrics) {
                 lyricsContent.innerHTML = `<p style="white-space: pre-wrap;">${song.lyrics}</p>`;
-                lyricsBtn.style.display = 'flex'; // Button anzeigen
             } else {
                 lyricsContent.innerHTML = '<p class="no-lyrics">Kein Songtext verfügbar</p>';
-                lyricsBtn.style.display = 'none'; // Button verstecken
             }
+            
+            // Lade LRC-Datei (async)
+            loadLRC(song.folder, song.filename).then(lrc => {
+                lrcData = lrc;
+                
+                // Zeige Lyrics/Karaoke Button wenn Lyrics oder LRC vorhanden
+                if (song.lyrics || lrcData) {
+                    lyricsBtn.style.display = 'flex';
+                    
+                    // Ändere Button-Tooltip wenn Karaoke verfügbar
+                    if (lrcData) {
+                        lyricsBtn.title = '🎤 Karaoke anzeigen';
+                    } else {
+                        lyricsBtn.title = 'Songtext anzeigen';
+                    }
+                } else {
+                    lyricsBtn.style.display = 'none';
+                }
+            });
             
             // Lyrics-Ansicht schließen wenn neuer Song geladen wird
             if (!lyricsContainer.classList.contains('hidden')) {
@@ -938,6 +1116,9 @@
 
         // Lyrics verstecken
         function hideLyrics() {
+            isKaraokeMode = false;
+            currentLrcIndex = -1;
+
             lyricsContainer.classList.add('hidden');
             albumCoverContainer.classList.remove('hidden');
         }
@@ -1034,6 +1215,7 @@
         });
 
         audio.addEventListener('timeupdate', () => {
+            updateKaraoke(audio.currentTime);
             const progress = (audio.currentTime / audio.duration) * 100 || 0;
             progressBar.value = progress;
             currentTimeEl.textContent = formatTime(audio.currentTime);
@@ -1112,7 +1294,14 @@
         });
 
         // Lyrics Event Listeners
-        lyricsBtn.addEventListener('click', showLyrics);
+        lyricsBtn.addEventListener('click', () => {
+            // Karaoke oder normale Lyrics
+            if (lrcData && lrcData.length > 0) {
+                showKaraoke();
+            } else {
+                showLyrics();
+            }
+        });
         closeLyricsBtn.addEventListener('click', hideLyrics);
 
         // Songs aus songs.json laden
