@@ -941,11 +941,16 @@
         
         // LRC Parser
         function parseLRC(lrcText) {
-            const lines = lrcText.split('\n');
+            // Normalisiere Line Breaks (entferne \r)
+            const normalizedText = lrcText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = normalizedText.split('\n');
             const parsed = [];
             
+            console.log('📝 Parsing LRC, Anzahl Zeilen:', lines.length);
+            
             for (const line of lines) {
-                const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2})\](.*)$/);
+                // Flexiblerer Regex: unterstützt 1-2 Stellen bei Centisekunden
+                const match = line.match(/\[(\d{2}):(\d{2})\.(\d{1,2})\](.*)$/);
                 if (match) {
                     const minutes = parseInt(match[1]);
                     const seconds = parseInt(match[2]);
@@ -961,6 +966,11 @@
                         });
                     }
                 }
+            }
+            
+            console.log('✅ LRC geparst, gefunden:', parsed.length, 'Zeilen');
+            if (parsed.length > 0) {
+                console.log('Erste 3 Zeilen:', parsed.slice(0, 3));
             }
             
             return parsed.sort((a, b) => a.time - b.time);
@@ -1000,9 +1010,11 @@
         // Karaoke-Mode aktivieren
         function showKaraoke() {
             if (!lrcData || lrcData.length === 0) {
-                console.log('Keine LRC-Daten verfügbar');
+                console.log('❌ Keine LRC-Daten verfügbar');
                 return;
             }
+            
+            console.log('🎤 Starte Karaoke mit', lrcData.length, 'Zeilen');
             
             isKaraokeMode = true;
             
@@ -1013,11 +1025,13 @@
             lyricsContainer.classList.remove('hidden');
             
             // Setze Header auf "Karaoke"
-            lyricsContainer.querySelector('h3').textContent = '🎤 Karaoke';
+            lyricsContainer.querySelector('h3').textContent = '🎤 KARAOKE';
             
             // Zeige Karaoke-Lyrics
             lyricsContent.classList.add('karaoke-mode');
             lyricsContent.innerHTML = '';
+            
+            console.log('📝 Erstelle', lrcData.length, 'Zeilen...');
             
             lrcData.forEach((line, index) => {
                 const lineDiv = document.createElement('div');
@@ -1027,6 +1041,12 @@
                 lineDiv.dataset.time = line.time;
                 lyricsContent.appendChild(lineDiv);
             });
+            
+            const createdLines = lyricsContent.querySelectorAll('.karaoke-line');
+            console.log('✅ Zeilen erstellt:', createdLines.length);
+            console.log('Erste 3 Zeilen im DOM:', 
+                Array.from(createdLines).slice(0, 3).map(el => el.textContent)
+            );
             
             currentLrcIndex = -1;
         }
@@ -1049,7 +1069,12 @@
             if (newIndex !== currentLrcIndex) {
                 currentLrcIndex = newIndex;
                 
+                console.log('🎵 Zeile gewechselt:', newIndex, 
+                    newIndex >= 0 ? lrcData[newIndex].text : 'Anfang');
+                
                 const lines = document.querySelectorAll('.karaoke-line');
+                console.log('   Zeilen im DOM:', lines.length);
+                
                 lines.forEach((line, index) => {
                     const lineIndex = parseInt(line.dataset.index);
                     
