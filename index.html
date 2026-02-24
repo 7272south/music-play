@@ -970,16 +970,29 @@
         async function loadLRC(folder, filename) {
             try {
                 const lrcPath = `https://7272south.github.io/frank-music/${folder}/${filename}.lrc`;
+                console.log('🎤 Versuche LRC zu laden:', lrcPath);
                 const response = await fetch(lrcPath);
                 
+                console.log('📡 LRC Response Status:', response.status, response.ok);
+                
                 if (!response.ok) {
+                    console.log('❌ Keine LRC-Datei gefunden für', filename);
                     return null;
                 }
                 
                 const lrcText = await response.text();
-                return parseLRC(lrcText);
+                console.log('✅ LRC geladen! Länge:', lrcText.length, 'Zeichen');
+                
+                const parsed = parseLRC(lrcText);
+                console.log('✅ LRC geparst! Anzahl Zeilen:', parsed.length);
+                
+                if (parsed.length > 0) {
+                    console.log('📝 Erste Zeile:', parsed[0]);
+                }
+                
+                return parsed;
             } catch (error) {
-                console.log('Fehler beim Laden der LRC:', error);
+                console.log('❌ Fehler beim Laden der LRC:', error);
                 return null;
             }
         }
@@ -992,20 +1005,17 @@
             }
             
             isKaraokeMode = true;
-            showingLyrics = true;
             
             // Verstecke Album-Cover
-            document.querySelector('.album-cover-container').style.display = 'none';
+            albumCoverContainer.classList.add('hidden');
             
             // Zeige Lyrics-Container
-            const lyricsContainer = document.querySelector('.lyrics-container');
-            lyricsContainer.style.display = 'flex';
+            lyricsContainer.classList.remove('hidden');
             
             // Setze Header auf "Karaoke"
             lyricsContainer.querySelector('h3').textContent = '🎤 Karaoke';
             
             // Zeige Karaoke-Lyrics
-            const lyricsContent = document.querySelector('.lyrics-content');
             lyricsContent.classList.add('karaoke-mode');
             lyricsContent.innerHTML = '';
             
@@ -1083,6 +1093,7 @@
             // Lade LRC-Datei (async)
             loadLRC(song.folder, song.filename).then(lrc => {
                 lrcData = lrc;
+                console.log('🎤 LRC-Daten gesetzt für', song.title, ':', lrcData ? lrcData.length + ' Zeilen' : 'null');
                 
                 // Zeige Lyrics/Karaoke Button wenn Lyrics oder LRC vorhanden
                 if (song.lyrics || lrcData) {
@@ -1091,6 +1102,7 @@
                     // Ändere Button-Tooltip wenn Karaoke verfügbar
                     if (lrcData) {
                         lyricsBtn.title = '🎤 Karaoke anzeigen';
+                        console.log('✅ Karaoke-Button aktiviert!');
                     } else {
                         lyricsBtn.title = 'Songtext anzeigen';
                     }
@@ -1295,10 +1307,13 @@
 
         // Lyrics Event Listeners
         lyricsBtn.addEventListener('click', () => {
+            console.log('🎤 Lyrics-Button geklickt! lrcData:', lrcData ? lrcData.length + ' Zeilen' : 'null');
             // Karaoke oder normale Lyrics
             if (lrcData && lrcData.length > 0) {
+                console.log('✅ Starte Karaoke-Mode!');
                 showKaraoke();
             } else {
+                console.log('📝 Zeige normale Lyrics');
                 showLyrics();
             }
         });
