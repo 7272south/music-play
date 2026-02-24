@@ -1331,6 +1331,8 @@
                     title: song.title,
                     artist: song.artist,
                     album: song.album,
+                    folder: song.folder, // ✅ WICHTIG für LRC-Loading!
+                    filename: song.filename, // ✅ WICHTIG für LRC-Loading!
                     lyrics: song.lyrics || null, // Lyrics hinzufügen (optional)
                     src: `https://7272south.github.io/frank-music/${song.folder}/${song.filename}.mp3`,
                     cover: `https://7272south.github.io/frank-music/${song.folder}/${song.filename}.jpeg`
