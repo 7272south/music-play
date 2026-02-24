@@ -319,7 +319,7 @@
 
         .karaoke-line.current {
             color: #dc2626; /* Weinrot */
-            /* font-weight: 700; */
+            font-weight: 700;
         }
 
         .karaoke-line.future {
@@ -1145,6 +1145,10 @@
         function showLyrics() {
             albumCoverContainer.classList.add('hidden');
             lyricsContainer.classList.remove('hidden');
+            
+            // Setze Header auf "SONGTEXT" (nicht Karaoke)
+            lyricsContainer.querySelector('h3').textContent = '📝 SONGTEXT';
+            
             playlistOverlay.classList.add('hidden'); // Playlist schließen
         }
 
