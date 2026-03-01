@@ -1101,10 +1101,14 @@
                 
                 // Erkenne LRC-Typ
                 const lrcType = detectLRCType(lrcText);
-                isWordLevelKaraoke = (lrcType === 'word');
+                
+                // FORCE WORD-LEVEL: Wenn LRC vorhanden ist, nutze immer Word-Level Karaoke
+                isWordLevelKaraoke = true; // ERZWUNGEN!
+                
+                console.log('🎤 WORD-LEVEL KARAOKE ERZWUNGEN!');
                 
                 // Parse entsprechend
-                const parsed = isWordLevelKaraoke ? parseWordLevelLRC(lrcText) : parseLRC(lrcText);
+                const parsed = parseWordLevelLRC(lrcText); // Immer Word-Level Parser!
                 
                 console.log('✅ LRC geparst!', isWordLevelKaraoke ? 'Word-Level' : 'Line-Level');
                 console.log('📊 Anzahl Zeilen/Gruppen:', parsed.length);
