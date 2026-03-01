@@ -1027,33 +1027,14 @@
             }
             
             console.log('✅ Word-Level LRC geparst:', words.length, 'Wörter');
+            console.log('📊 Alle Wörter in flacher Liste (kein Grouping)');
             
-            // Gruppiere Wörter zu Zeilen (alle Wörter innerhalb von ~4 Sekunden)
-            const lines_grouped = [];
-            let currentLine = null;
-            const LINE_DURATION = 12.0; // Längere Zeilen für bessere Lesbarkeit
-            
-            for (const wordData of words) {
-                if (!currentLine || (wordData.time - currentLine.startTime) > LINE_DURATION) {
-                    if (currentLine) {
-                        lines_grouped.push(currentLine);
-                    }
-                    currentLine = {
-                        startTime: wordData.time,
-                        words: [wordData]
-                    };
-                } else {
-                    currentLine.words.push(wordData);
-                }
-            }
-            
-            if (currentLine) {
-                lines_grouped.push(currentLine);
-            }
-            
-            console.log('📊 Gruppiert in', lines_grouped.length, 'Zeilen');
-            
-            return lines_grouped;
+            // WICHTIG: Returne die Wörter flach ohne Grouping!
+            // Für Kompatibilität mit showWordKaraoke packen wir alles in EIN "line" Objekt
+            return [{
+                startTime: words[0]?.time || 0,
+                words: words
+            }];
         }
         
         // ==================== END WORD-LEVEL PARSER ====================
