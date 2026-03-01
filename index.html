@@ -331,9 +331,10 @@
         }
 
         /* Word-Level Karaoke */
-        .karaoke-line-container {
-            padding: 10px 0;
+        .karaoke-text-flow {
+            padding: 15px;
             line-height: 1.8;
+            text-align: left;
         }
 
         .karaoke-word {
@@ -1030,7 +1031,7 @@
             // Gruppiere Wörter zu Zeilen (alle Wörter innerhalb von ~4 Sekunden)
             const lines_grouped = [];
             let currentLine = null;
-            const LINE_DURATION = 4.0;
+            const LINE_DURATION = 12.0; // Längere Zeilen für bessere Lesbarkeit
             
             for (const wordData of words) {
                 if (!currentLine || (wordData.time - currentLine.startTime) > LINE_DURATION) {
@@ -1150,28 +1151,28 @@
             lyricsContent.classList.add('karaoke-mode');
             lyricsContent.innerHTML = '';
             
-            // Erstelle Zeilen mit Wörtern
+            // Erstelle EINEN durchgehenden Container für alle Wörter
+            const textContainer = document.createElement('div');
+            textContainer.className = 'karaoke-text-flow';
+            
+            let wordIndex = 0;
+            
+            // Alle Wörter aus allen Zeilen zusammenhängend anzeigen
             lrcData.forEach((line, lineIndex) => {
-                const lineDiv = document.createElement('div');
-                lineDiv.className = 'karaoke-line-container';
-                lineDiv.dataset.lineIndex = lineIndex;
-                lineDiv.dataset.startTime = line.startTime;
-                
-                line.words.forEach((wordData, wordIndex) => {
+                line.words.forEach((wordData) => {
                     const wordSpan = document.createElement('span');
                     wordSpan.className = 'karaoke-word future';
                     wordSpan.textContent = wordData.word + ' ';
                     wordSpan.dataset.time = wordData.time;
-                    wordSpan.dataset.lineIndex = lineIndex;
                     wordSpan.dataset.wordIndex = wordIndex;
-                    lineDiv.appendChild(wordSpan);
+                    textContainer.appendChild(wordSpan);
+                    wordIndex++;
                 });
-                
-                lyricsContent.appendChild(lineDiv);
             });
             
-            const totalWords = lrcData.reduce((sum, line) => sum + line.words.length, 0);
-            console.log('✅ Zeilen erstellt:', lrcData.length, 'mit insgesamt', totalWords, 'Wörtern');
+            lyricsContent.appendChild(textContainer);
+            
+            console.log('✅ Text erstellt mit', wordIndex, 'Wörtern zusammenhängend');
             
             currentLrcIndex = -1;
         }
@@ -1267,33 +1268,31 @@
         // Update Word-Level Karaoke
         function updateWordKaraoke(currentTime) {
             const allWords = document.querySelectorAll('.karaoke-word');
-            let currentLineIndex = -1;
+            let currentWordSpan = null;
             
             // Highlighte alle Wörter
             allWords.forEach(wordSpan => {
                 const wordTime = parseFloat(wordSpan.dataset.time);
-                const lineIndex = parseInt(wordSpan.dataset.lineIndex);
                 
-                if (currentTime >= wordTime && currentTime < wordTime + 0.3) {
+                if (currentTime >= wordTime && currentTime < wordTime + 0.4) {
+                    // Aktuelles Wort
                     wordSpan.className = 'karaoke-word current';
-                    currentLineIndex = lineIndex;
-                } else if (currentTime >= wordTime + 0.3) {
+                    currentWordSpan = wordSpan;
+                } else if (currentTime >= wordTime + 0.4) {
+                    // Vergangenes Wort
                     wordSpan.className = 'karaoke-word past';
                 } else {
+                    // Zukünftiges Wort
                     wordSpan.className = 'karaoke-word future';
                 }
             });
             
-            // Auto-Scroll zur aktuellen Zeile
-            if (currentLineIndex !== currentLrcIndex && currentLineIndex >= 0) {
-                currentLrcIndex = currentLineIndex;
-                const lineContainers = document.querySelectorAll('.karaoke-line-container');
-                if (lineContainers[currentLineIndex]) {
-                    lineContainers[currentLineIndex].scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                }
+            // Auto-Scroll zum aktuellen Wort
+            if (currentWordSpan) {
+                currentWordSpan.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
             }
         }        }
         
