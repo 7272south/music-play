@@ -971,23 +971,17 @@
             const lines = lrcText.split('\n').filter(l => l.trim());
             if (lines.length === 0) return 'line';
             
-            // Prüfe die ersten 50 Zeilen (mehr Sample für bessere Erkennung)
-            let singleWordLines = 0;
-            let multiWordLines = 0;
+            // Zähle Wörter pro Zeile
+            let totalWords = 0;
             let validLines = 0;
             
-            for (const line of lines.slice(0, Math.min(50, lines.length))) {
+            for (const line of lines.slice(0, Math.min(20, lines.length))) {
                 const match = line.match(/\[.*?\](.*)$/);
                 if (match) {
                     const text = match[1].trim();
                     if (text) {
-                        const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-                        
-                        if (wordCount === 1) {
-                            singleWordLines++;
-                        } else {
-                            multiWordLines++;
-                        }
+                        const words = text.split(/\s+/).length;
+                        totalWords += words;
                         validLines++;
                     }
                 }
@@ -995,12 +989,12 @@
             
             if (validLines === 0) return 'line';
             
-            // Wenn 80%+ der Zeilen nur EIN Wort haben → Word-Level
-            const singleWordPercent = (singleWordLines / validLines) * 100;
-            const isWordLevel = singleWordPercent >= 80;
+            const avgWordsPerLine = totalWords / validLines;
             
-            console.log(`📊 LRC-Typ erkannt: ${isWordLevel ? 'Word-Level' : 'Line-Level'}`);
-            console.log(`   Geprüft: ${validLines} Zeilen, ${singleWordLines} mit 1 Wort (${singleWordPercent.toFixed(0)}%)`);
+            // Wenn durchschnittlich weniger als 2 Wörter pro Zeile → Word-Level
+            const isWordLevel = avgWordsPerLine < 2;
+            
+            console.log(`📊 LRC-Typ erkannt: ${isWordLevel ? 'Word-Level' : 'Line-Level'} (Ø ${avgWordsPerLine.toFixed(1)} Wörter/Zeile)`);
             
             return isWordLevel ? 'word' : 'line';
         }
@@ -1101,14 +1095,10 @@
                 
                 // Erkenne LRC-Typ
                 const lrcType = detectLRCType(lrcText);
-                
-                // FORCE WORD-LEVEL: Wenn LRC vorhanden ist, nutze immer Word-Level Karaoke
-                isWordLevelKaraoke = true; // ERZWUNGEN!
-                
-                console.log('🎤 WORD-LEVEL KARAOKE ERZWUNGEN!');
+                isWordLevelKaraoke = (lrcType === 'word');
                 
                 // Parse entsprechend
-                const parsed = parseWordLevelLRC(lrcText); // Immer Word-Level Parser!
+                const parsed = isWordLevelKaraoke ? parseWordLevelLRC(lrcText) : parseLRC(lrcText);
                 
                 console.log('✅ LRC geparst!', isWordLevelKaraoke ? 'Word-Level' : 'Line-Level');
                 console.log('📊 Anzahl Zeilen/Gruppen:', parsed.length);
@@ -1216,6 +1206,14 @@
         function updateKaraoke(currentTime) {
             if (!isKaraokeMode || !lrcData || lrcData.length === 0) return;
             
+            // WICHTIG: Wenn Word-Level Karaoke → updateWordKaraoke aufrufen!
+            if (isWordLevelKaraoke) {
+                updateWordKaraoke(currentTime);
+                return;
+            }
+            
+            // Ab hier: Nur für Line-Level Karaoke
+            
             // Finde die aktuelle Zeile
             let newIndex = -1;
             for (let i = 0; i < lrcData.length; i++) {
@@ -1285,7 +1283,7 @@
                     block: 'center'
                 });
             }
-        }        }
+        }
         
         // ==================== END KARAOKE FUNCTIONS ====================
 
