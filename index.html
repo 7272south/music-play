@@ -1093,14 +1093,14 @@
                 const lrcText = await response.text();
                 console.log('✅ LRC geladen! Länge:', lrcText.length, 'Zeichen');
                 
-                // Erkenne LRC-Typ
-                const lrcType = detectLRCType(lrcText);
-                isWordLevelKaraoke = (lrcType === 'word');
+                // ✅ WORD-LEVEL ERZWUNGEN - Ignoriere Auto-Detection!
+                isWordLevelKaraoke = true;
+                console.log('🎤 WORD-LEVEL KARAOKE ERZWUNGEN!');
                 
-                // Parse entsprechend
-                const parsed = isWordLevelKaraoke ? parseWordLevelLRC(lrcText) : parseLRC(lrcText);
+                // Parse IMMER als Word-Level
+                const parsed = parseWordLevelLRC(lrcText);
                 
-                console.log('✅ LRC geparst!', isWordLevelKaraoke ? 'Word-Level' : 'Line-Level');
+                console.log('✅ LRC geparst! Word-Level (erzwungen)');
                 console.log('📊 Anzahl Zeilen/Gruppen:', parsed.length);
                 
                 if (parsed.length > 0) {
