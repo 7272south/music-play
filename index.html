@@ -319,7 +319,7 @@
 
         .karaoke-line.current {
             color: #dc2626; /* Weinrot */
-            font-weight: 700;
+            /* font-weight: 700; */
         }
 
         .karaoke-line.future {
@@ -328,33 +328,6 @@
 
         .lyrics-content.karaoke-mode {
             scroll-behavior: smooth;
-        }
-
-        /* Word-Level Karaoke */
-        .karaoke-text-flow {
-            padding: 15px;
-            line-height: 1.8;
-            text-align: left;
-        }
-
-        .karaoke-word {
-            display: inline;
-            transition: color 0.2s ease;
-            font-size: 15px;
-        }
-
-        .karaoke-word.past {
-            color: #6b7280;
-            opacity: 0.5;
-        }
-
-        .karaoke-word.current {
-            color: #dc2626; /* Weinrot */
-            font-weight: 700;
-        }
-
-        .karaoke-word.future {
-            color: #dbeafe;
         }
 
         .lyrics-content::-webkit-scrollbar-thumb:hover {
@@ -886,7 +859,6 @@
         let lrcLines = [];
         let currentLrcIndex = -1;
         let isKaraokeMode = false;
-        let isWordLevelKaraoke = false; // Wort-für-Wort vs Zeilen-Karaoke
 
         // Alben extrahieren und Buttons erstellen
         function initAlbumButtons() {
@@ -964,81 +936,6 @@
         
         // ==================== KARAOKE FUNCTIONS ====================
         
-        // ==================== WORD-LEVEL KARAOKE PARSER ====================
-        
-        // Erkenne ob LRC Word-Level ist (ein Wort pro Zeile) oder Line-Level (viele Wörter pro Zeile)
-        function detectLRCType(lrcText) {
-            const lines = lrcText.split('\n').filter(l => l.trim());
-            if (lines.length === 0) return 'line';
-            
-            // Zähle Wörter pro Zeile
-            let totalWords = 0;
-            let validLines = 0;
-            
-            for (const line of lines.slice(0, Math.min(20, lines.length))) {
-                const match = line.match(/\[.*?\](.*)$/);
-                if (match) {
-                    const text = match[1].trim();
-                    if (text) {
-                        const words = text.split(/\s+/).length;
-                        totalWords += words;
-                        validLines++;
-                    }
-                }
-            }
-            
-            if (validLines === 0) return 'line';
-            
-            const avgWordsPerLine = totalWords / validLines;
-            
-            // Wenn durchschnittlich weniger als 2 Wörter pro Zeile → Word-Level
-            const isWordLevel = avgWordsPerLine < 2;
-            
-            console.log(`📊 LRC-Typ erkannt: ${isWordLevel ? 'Word-Level' : 'Line-Level'} (Ø ${avgWordsPerLine.toFixed(1)} Wörter/Zeile)`);
-            
-            return isWordLevel ? 'word' : 'line';
-        }
-        
-        // Parse Word-Level LRC (ein Wort pro Zeile)
-        function parseWordLevelLRC(lrcText) {
-            const normalizedText = lrcText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            const lines = normalizedText.split('\n');
-            const words = [];
-            
-            console.log('📝 Parsing Word-Level LRC, Anzahl Zeilen:', lines.length);
-            
-            for (const line of lines) {
-                const match = line.match(/\[(\d{2}):(\d{2})\.(\d{1,2})\](.*)$/);
-                if (match) {
-                    const minutes = parseInt(match[1]);
-                    const seconds = parseInt(match[2]);
-                    const centiseconds = parseInt(match[3]);
-                    const word = match[4].trim();
-                    
-                    const timeInSeconds = minutes * 60 + seconds + centiseconds / 100;
-                    
-                    if (word) {
-                        words.push({
-                            time: timeInSeconds,
-                            word: word
-                        });
-                    }
-                }
-            }
-            
-            console.log('✅ Word-Level LRC geparst:', words.length, 'Wörter');
-            console.log('📊 Alle Wörter in flacher Liste (kein Grouping)');
-            
-            // WICHTIG: Returne die Wörter flach ohne Grouping!
-            // Für Kompatibilität mit showWordKaraoke packen wir alles in EIN "line" Objekt
-            return [{
-                startTime: words[0]?.time || 0,
-                words: words
-            }];
-        }
-        
-        // ==================== END WORD-LEVEL PARSER ====================
-
         // LRC Parser
         function parseLRC(lrcText) {
             // Normalisiere Line Breaks (entferne \r)
@@ -1093,15 +990,8 @@
                 const lrcText = await response.text();
                 console.log('✅ LRC geladen! Länge:', lrcText.length, 'Zeichen');
                 
-                // ✅ WORD-LEVEL ERZWUNGEN - Ignoriere Auto-Detection!
-                isWordLevelKaraoke = true;
-                console.log('🎤 WORD-LEVEL KARAOKE ERZWUNGEN!');
-                
-                // Parse IMMER als Word-Level
-                const parsed = parseWordLevelLRC(lrcText);
-                
-                console.log('✅ LRC geparst! Word-Level (erzwungen)');
-                console.log('📊 Anzahl Zeilen/Gruppen:', parsed.length);
+                const parsed = parseLRC(lrcText);
+                console.log('✅ LRC geparst! Anzahl Zeilen:', parsed.length);
                 
                 if (parsed.length > 0) {
                     console.log('📝 Erste Zeile:', parsed[0]);
@@ -1112,50 +1002,6 @@
                 console.log('❌ Fehler beim Laden der LRC:', error);
                 return null;
             }
-        }
-        
-        // Word-Level Karaoke anzeigen
-        function showWordKaraoke() {
-            if (!lrcData || lrcData.length === 0) {
-                console.log('❌ Keine LRC-Daten verfügbar');
-                return;
-            }
-            
-            console.log('🎤 Starte Word-Level Karaoke mit', lrcData.length, 'Zeilen');
-            
-            isKaraokeMode = true;
-            
-            albumCoverContainer.classList.add('hidden');
-            lyricsContainer.classList.remove('hidden');
-            lyricsContainer.querySelector('h3').textContent = '🎤 KARAOKE';
-            
-            lyricsContent.classList.add('karaoke-mode');
-            lyricsContent.innerHTML = '';
-            
-            // Erstelle EINEN durchgehenden Container für alle Wörter
-            const textContainer = document.createElement('div');
-            textContainer.className = 'karaoke-text-flow';
-            
-            let wordIndex = 0;
-            
-            // Alle Wörter aus allen Zeilen zusammenhängend anzeigen
-            lrcData.forEach((line, lineIndex) => {
-                line.words.forEach((wordData) => {
-                    const wordSpan = document.createElement('span');
-                    wordSpan.className = 'karaoke-word future';
-                    wordSpan.textContent = wordData.word + ' ';
-                    wordSpan.dataset.time = wordData.time;
-                    wordSpan.dataset.wordIndex = wordIndex;
-                    textContainer.appendChild(wordSpan);
-                    wordIndex++;
-                });
-            });
-            
-            lyricsContent.appendChild(textContainer);
-            
-            console.log('✅ Text erstellt mit', wordIndex, 'Wörtern zusammenhängend');
-            
-            currentLrcIndex = -1;
         }
         
         // Karaoke-Mode aktivieren
@@ -1206,14 +1052,6 @@
         function updateKaraoke(currentTime) {
             if (!isKaraokeMode || !lrcData || lrcData.length === 0) return;
             
-            // WICHTIG: Wenn Word-Level Karaoke → updateWordKaraoke aufrufen!
-            if (isWordLevelKaraoke) {
-                updateWordKaraoke(currentTime);
-                return;
-            }
-            
-            // Ab hier: Nur für Line-Level Karaoke
-            
             // Finde die aktuelle Zeile
             let newIndex = -1;
             for (let i = 0; i < lrcData.length; i++) {
@@ -1250,38 +1088,6 @@
                     } else {
                         line.className = 'karaoke-line future';
                     }
-                });
-            }
-        }
-
-        
-        // Update Word-Level Karaoke
-        function updateWordKaraoke(currentTime) {
-            const allWords = document.querySelectorAll('.karaoke-word');
-            let currentWordSpan = null;
-            
-            // Highlighte alle Wörter
-            allWords.forEach(wordSpan => {
-                const wordTime = parseFloat(wordSpan.dataset.time);
-                
-                if (currentTime >= wordTime && currentTime < wordTime + 0.4) {
-                    // Aktuelles Wort
-                    wordSpan.className = 'karaoke-word current';
-                    currentWordSpan = wordSpan;
-                } else if (currentTime >= wordTime + 0.4) {
-                    // Vergangenes Wort
-                    wordSpan.className = 'karaoke-word past';
-                } else {
-                    // Zukünftiges Wort
-                    wordSpan.className = 'karaoke-word future';
-                }
-            });
-            
-            // Auto-Scroll zum aktuellen Wort
-            if (currentWordSpan) {
-                currentWordSpan.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
                 });
             }
         }
@@ -1348,8 +1154,6 @@
 
         // Lyrics verstecken
         function hideLyrics() {
-            isWordLevelKaraoke = false;
-
             isKaraokeMode = false;
             currentLrcIndex = -1;
 
@@ -1532,12 +1336,8 @@
             console.log('🎤 Lyrics-Button geklickt! lrcData:', lrcData ? lrcData.length + ' Zeilen' : 'null');
             // Karaoke oder normale Lyrics
             if (lrcData && lrcData.length > 0) {
-                console.log('✅ Starte Karaoke-Mode!', isWordLevelKaraoke ? '(Word-Level)' : '(Line-Level)');
-                if (isWordLevelKaraoke) {
-                    showWordKaraoke();
-                } else {
-                    showKaraoke();
-                }
+                console.log('✅ Starte Karaoke-Mode!');
+                showKaraoke();
             } else {
                 console.log('📝 Zeige normale Lyrics');
                 showLyrics();
