@@ -971,17 +971,23 @@
             const lines = lrcText.split('\n').filter(l => l.trim());
             if (lines.length === 0) return 'line';
             
-            // Zähle Wörter pro Zeile
-            let totalWords = 0;
+            // Prüfe die ersten 50 Zeilen (mehr Sample für bessere Erkennung)
+            let singleWordLines = 0;
+            let multiWordLines = 0;
             let validLines = 0;
             
-            for (const line of lines.slice(0, Math.min(20, lines.length))) {
+            for (const line of lines.slice(0, Math.min(50, lines.length))) {
                 const match = line.match(/\[.*?\](.*)$/);
                 if (match) {
                     const text = match[1].trim();
                     if (text) {
-                        const words = text.split(/\s+/).length;
-                        totalWords += words;
+                        const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+                        
+                        if (wordCount === 1) {
+                            singleWordLines++;
+                        } else {
+                            multiWordLines++;
+                        }
                         validLines++;
                     }
                 }
@@ -989,12 +995,12 @@
             
             if (validLines === 0) return 'line';
             
-            const avgWordsPerLine = totalWords / validLines;
+            // Wenn 80%+ der Zeilen nur EIN Wort haben → Word-Level
+            const singleWordPercent = (singleWordLines / validLines) * 100;
+            const isWordLevel = singleWordPercent >= 80;
             
-            // Wenn durchschnittlich weniger als 2 Wörter pro Zeile → Word-Level
-            const isWordLevel = avgWordsPerLine < 2;
-            
-            console.log(`📊 LRC-Typ erkannt: ${isWordLevel ? 'Word-Level' : 'Line-Level'} (Ø ${avgWordsPerLine.toFixed(1)} Wörter/Zeile)`);
+            console.log(`📊 LRC-Typ erkannt: ${isWordLevel ? 'Word-Level' : 'Line-Level'}`);
+            console.log(`   Geprüft: ${validLines} Zeilen, ${singleWordLines} mit 1 Wort (${singleWordPercent.toFixed(0)}%)`);
             
             return isWordLevel ? 'word' : 'line';
         }
